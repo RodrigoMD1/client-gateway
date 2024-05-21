@@ -1,11 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, Patch, Post } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
+import { PRODUCT_SERVICE } from 'src/config/index';
 
 @Controller('products')
 export class ProductsController {
 
 
-  constructor() { }
+  constructor(
+    @Inject(PRODUCT_SERVICE) private readonly productsClient: ClientProxy // esto me permite usar los controller y la logica del products del otro proyecto
+  ) { }
 
   @Post()
   createProduct() {
@@ -15,7 +19,7 @@ export class ProductsController {
 
   @Get()
   findAllProducts() {
-    return 'esta funcion devuelva varios productos '
+    return this.productsClient.send({ cmd: 'find_all_products' },{}) // el segundo argumento ese {} vacio seria el payload del otro proyecto pero aca se envia un objeto vacio
   }
 
   @Get(':id')
