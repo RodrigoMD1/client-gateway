@@ -5,7 +5,7 @@ import * as joi from 'joi';
 interface EnvVars {
   PORT: number;
   PRODUCTS_MICROSERVICE_HOST: string;
-  PRODUCTS_MICROSERVICE_PORT: number;
+  PRODUCTS_MICROSERVICE_PORT: number; // este tiene que tener el mismo port que el otro proyecto 
 }
 
 const envsSchema = joi.object({
