@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { BadRequestException, Body, Controller, Get, Inject, Param, Patch, Post, Query } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Inject, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
-import { firstValueFrom } from 'rxjs';
+import { catchError, firstValueFrom } from 'rxjs';
 import { PaginationDto } from 'src/common';
 import { PRODUCT_SERVICE } from 'src/config/index';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 
 @Controller('products')
 export class ProductsController {
@@ -14,8 +16,8 @@ export class ProductsController {
   ) { }
 
   @Post()
-  createProduct() {
-    return 'crea un producto'
+  createProduct(@Body() createProductDto: CreateProductDto) {
+    return this.productsClient.send({ cmd: 'create_product' }, createProductDto);
   }
 
 
@@ -27,32 +29,40 @@ export class ProductsController {
   @Get(':id')
   async findOne(@Param('id') id: string) {
 
-    try {
-
-      const product = await firstValueFrom(
-        this.productsClient.send({ cmd: 'find_one_product' }, { id })
+    return this.productsClient.send({ cmd: 'find_one_product' }, { id })
+      .pipe(
+        catchError(err => { throw new RpcException(err) })
       );
-      return product;
 
-    } catch (error) {
-
-      throw new RpcException(error);
-
-    }
+    // esto de abajo es igual que lo de arriba depende de mi cual elegir el de arriba es mas corte y se entiende mas pero como yo quiera
+    //try {
+    //  const product = await firstValueFrom(
+    //    this.productsClient.send({ cmd: 'find_one_product' }, { id }) );
+    // return product;
+    //} catch (error) {
+    // throw new RpcException(error); }
 
   }
 
   @Get(':id')
   deleteProduct(@Param('id') id: string) {
-    return 'esta funcion elimina el producto ' + id;
+    return this.productsClient.send({ cmd: 'delete_product' }, { id })
+      .pipe(
+        catchError(err => { throw new RpcException(err) })
+      )
   }
 
 
   @Patch(':id')
   patchProduct(
-    @Param('id') id: string,
-    @Body() body: any) {
-    return 'esta funcion actualiza el producto' + id;
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateProductoDto: UpdateProductDto) {
+    return this.productsClient.send({ cmd: 'update_product' }, {
+      id,
+      ...updateProductoDto
+    }).pipe(
+      catchError(err => { throw new RpcException(err) })
+    )
   }
 
 }
